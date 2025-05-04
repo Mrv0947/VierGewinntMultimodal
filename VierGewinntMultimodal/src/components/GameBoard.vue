@@ -138,10 +138,17 @@ const resetBoard = () => {
     >
       <button
         @click="makeMove(colIndex)"
-        class="w-10 h-10 bg-blue-500 text-white rounded hover:bg-blue-600 mb-5"
+        :disabled="winnerMessage !== null"
+        :class="[
+    'w-10 h-10 text-white rounded mb-5 transition',
+    winnerMessage === null
+      ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+      : 'bg-gray-400 cursor-not-allowed'
+  ]"
       >
         ↓
       </button>
+
       <div
         v-for="(cell, rowIndex) in col"
         :key="rowIndex"
@@ -161,5 +168,4 @@ const resetBoard = () => {
       Reset
     </button>
   </div>
-
 </template>
