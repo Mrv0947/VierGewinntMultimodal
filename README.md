@@ -4,6 +4,8 @@
 Vue.js
 TypeScript
 
+axios
+socket.io-client
 
 ### Client setup
 

@@ -47,7 +47,7 @@ app.post('/move', (req, res) => {
   res.json(status);
 });
 
-// Punkt końcowy POST /new
+// Post endpoint for reseting the game
 app.post('/new', (req, res) => {
   console.log("Received /new request");
 
@@ -55,13 +55,15 @@ app.post('/new', (req, res) => {
   res.json({ message: 'Game reset successful' });
 });
 
-// Inicjujemy serwer i nasłuchujemy na połączenia
+
+// Server initialization
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   resetBoard();
 });
 
-// Logika gry
+
+// Game logic part
 const rows = 7;
 const columns = 6;
 
@@ -85,8 +87,6 @@ const makeMove = (col) => {
     // checkFailure();
 
     currentPlayer = currentPlayer === 'Player Yellow' ? 'Player Red' : 'Player Yellow';
-
-    // io.emit('gameUpdated', { board, currentPlayer, winnerMessage });
 
     return { board, currentPlayer, winnerMessage };
   }
@@ -123,7 +123,6 @@ const checkHorizontalWin = (col, row) => {
     winnerMessage = `${currentPlayer} wins - 4 pawns horizontally.`;
   }
 };
-
 
 
 const checkDiagonalWinDownRight = (col, row) => {
