@@ -84,7 +84,7 @@ const makeMove = (col) => {
     checkHorizontalWin(col, row);
     checkDiagonalWinDownRight(col, row);
     checkDiagonalWinUpRight(col, row);
-    // checkFailure();
+    checkDraw();
 
     currentPlayer = currentPlayer === 'Player Yellow' ? 'Player Red' : 'Player Yellow';
 
@@ -162,6 +162,13 @@ const checkDiagonalWinUpRight = (col, row) => {
   }
 }
 
+const checkDraw = () => {
+  const isBoardFull = columnHeights.every(h => h === rows);
+  if (isBoardFull && winnerMessage === null) {
+    winnerMessage = "It's a draw!";
+  }
+};
+
 
 const hasFourElements = (array) => {
   for (let i = 0; i <= array.length - 4; i++) {
@@ -191,7 +198,7 @@ const resetBoard = () => {
 
   board = Array.from({ length: columns }, () => Array(rows).fill(null));
   columnHeights = Array(columns).fill(0);
-  currentPlayer = 'yellow';
+  currentPlayer = 'Player Yellow';
   winnerMessage = null;
 };
 
