@@ -9,7 +9,7 @@ const board = ref<(null | 'red' | 'yellow')[][]>(
   Array.from({ length: columns.value }, () => Array(rows.value).fill(null))
 );
 
-const currentPlayer = ref('Player 1');
+const currentPlayer = ref('Player Yellow');
 const winnerMessage = ref<string | null>(null);
 const columnHeights = ref<number[]>(Array(7).fill(0));
 
@@ -19,15 +19,16 @@ const makeMove = (col: number) => {
 
     const row = rows.value - columnHeights.value[col] - 1; // count the row, to put the pawn into
 
-    board.value[col][row] = currentPlayer.value === 'Player 1' ? 'yellow' : 'red'; // add a pawn
+    board.value[col][row] = currentPlayer.value === 'Player Yellow' ? 'yellow' : 'red'; // add a pawn
     columnHeights.value[col] += 1;
 
     checkVerticalWin(col, row);
     checkHorizontalWin(col, row);
     checkDiagonalWinDownRight(col, row);
     checkDiagonalWinUpRight(col, row);
+    checkFailure();
 
-    currentPlayer.value = currentPlayer.value === 'Player 1' ? 'Player 2' : 'Player 1';
+    currentPlayer.value = currentPlayer.value === 'Player Yellow' ? 'Player Red' : 'Player Yellow';
     movesCounter.value++;
   }
 };
@@ -53,11 +54,15 @@ const checkHorizontalWin = (col: number, row: number) => {
   const start = Math.max(col - 3, 0); // max 3 columns on the left
   const end = Math.min(col + 3, board.value.length - 1); // max 3 columns on the right, no more than the last one
 
+  const coordinates: {x: number;y: number;}[] = [];
+
   for (let i = start; i <= end; i++) {
     result.push(board.value[i][row]);
+    coordinates.push({x: i, y: row});
   }
 
   if(hasFourElements(result)) {
+    hasFourElementsCoordinates(coordinates);
     winnerMessage.value = `${currentPlayer.value} wins - 4 pawns horizontally.`;
   }
 }
@@ -76,6 +81,7 @@ const checkDiagonalWinDownRight = (col: number, row: number) => {
   }
 
   if(hasFourElements(result)) {
+    alert(result);
     winnerMessage.value = `${currentPlayer.value} wins - 4 pawns diagonally \u2198`;
   }
 }
@@ -95,6 +101,7 @@ const checkDiagonalWinUpRight = (col: number, row: number) => {
   }
 
   if(hasFourElements(result)) {
+    alert(result);
     winnerMessage.value = `${currentPlayer.value} wins - 4 pawns diagonally \u2197`;
   }
 }
@@ -103,7 +110,9 @@ const checkDiagonalWinUpRight = (col: number, row: number) => {
 const hasFourElements = (array: (string | null)[]) => {
   for (let i = 0; i <= array.length - 4; i++) {
     const slice = array.slice(i, i + 4);
+
     if (slice.every(color => color === 'yellow') || slice.every(color => color === 'red')) {
+      console.log(slice + " ");
       return true;
     }
   }
@@ -111,10 +120,34 @@ const hasFourElements = (array: (string | null)[]) => {
   return false;
 }
 
+const hasFourElementsCoordinates = (array: ({x : number, y : number})[]) => {
+  for (let element in array) {
+    element = board.value[array.x][array.y];
+  }
+
+  for (let i = 0; i <= array.length - 4; i++) {
+    const slice = array.slice(i, i + 4);
+  }// wydaje mi sie ze powinno to byc w ten sposob ze tylko i wylacznie koordynaty przesyalc
+}
+
+const checkFailure = () => {
+  for (let col = 0; col < columns.value; col++) {
+    const isFull = board.value[col].every(cell => cell !== null);
+
+    if (!isFull) {
+      return;
+    }
+  }
+
+  alert("Both players loose!")
+  winnerMessage.value = `Both players loose!`;
+}
+
+
 const resetBoard = () => {
   board.value = Array.from({ length: columns.value }, () => Array(rows.value).fill(null));
   columnHeights.value = Array(columns.value).fill(0);
-  currentPlayer.value = 'Player 1';
+  currentPlayer.value = 'Player Yellow';
   movesCounter.value = 1;
   winnerMessage.value = null;
 };
