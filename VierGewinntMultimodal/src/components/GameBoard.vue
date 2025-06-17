@@ -1,156 +1,78 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
+import { ref, onMounted, onUnmounted } from 'vue';
+import axios from 'axios';
+import { io } from 'socket.io-client';
 
 const movesCounter = ref<number>(1);
 const rows = ref<number>(7);
 const columns = ref<number>(6);
-const board = ref<(null | 'red' | 'yellow')[][]>(
-  Array.from({ length: columns.value }, () => Array(rows.value).fill(null))
-);
-
+const board = ref<(null | 'red' | 'yellow')[][]>(Array.from({ length: columns.value }, () => Array(rows.value).fill(null)));
 const currentPlayer = ref('Player Yellow');
 const winnerMessage = ref<string | null>(null);
-const columnHeights = ref<number[]>(Array(7).fill(0));
 
-const makeMove = (col: number) => {
-  if (winnerMessage.value === null) {
-    if (columnHeights.value[col] > rows.value) return; // is the column 'full'
+const apiUrl = 'http://localhost:3000'; // server address
+const socket = io(apiUrl);  // client socket
 
-    const row = rows.value - columnHeights.value[col] - 1; // count the row, to put the pawn into
 
-    board.value[col][row] = currentPlayer.value === 'Player Yellow' ? 'yellow' : 'red'; // add a pawn
-    columnHeights.value[col] += 1;
+// make a move using GUI
+const makeMove = async (col: number) => {
+  try {
+    if (winnerMessage.value === null) {
+      await axios.post(`${apiUrl}/move`, { column: col });
+    }
+  } catch (error) {
+    console.error('Error making move:', error);
+  }
 
-    checkVerticalWin(col, row);
-    checkHorizontalWin(col, row);
-    checkDiagonalWinDownRight(col, row);
-    checkDiagonalWinUpRight(col, row);
-    checkFailure();
+  loadBoardState();
+};
 
-    currentPlayer.value = currentPlayer.value === 'Player Yellow' ? 'Player Red' : 'Player Yellow';
-    movesCounter.value++;
+
+// reset game using GUI
+const resetBoard = async () => {
+  try {
+    const response = await axios.post(`${apiUrl}/new`);
+    winnerMessage.value = null;
+    movesCounter.value = 1;
+    currentPlayer.value = 'Player Yellow';
+  } catch (error) {
+    console.error('Error resetting board:', error);
+  }
+
+  loadBoardState();
+};
+
+
+// Ask the server for current board/game state
+const loadBoardState = async () => {
+  try {
+    const response = await axios.get(`${apiUrl}/status`);
+    const status = response.data;
+    console.log("status");
+    console.log(status);
+    board.value = status.board;
+    currentPlayer.value = `${status.currentPlayer.charAt(0).toUpperCase() + status.currentPlayer.slice(1)}`;
+    winnerMessage.value = status.winnerMessage;
+  } catch (error) {
+    console.error('Error loading board state:', error);
   }
 };
 
-const checkVerticalWin = (col: number, row: number) => {
-  const result: (string | null)[] = [];
 
-  const start = Math.max(row - 3, 0); // max 3 elements on the left
-  const end = Math.min(row + 3, board.value[col].length - 1); // max 3 elements on the right, no more than the last index in the row
+onMounted(() => {
+  loadBoardState();
 
-    for (let j = start; j <= end; j++) {
-    result.push(board.value[col][j]);
-  }
-
-  if(hasFourElements(result)) {
-    winnerMessage.value = `${currentPlayer.value} wins - 4 pawns vertically.`;
-  }
-}
-
-const checkHorizontalWin = (col: number, row: number) => {
-  const result: (string | null)[] = [];
-
-  const start = Math.max(col - 3, 0); // max 3 columns on the left
-  const end = Math.min(col + 3, board.value.length - 1); // max 3 columns on the right, no more than the last one
-
-  const coordinates: {x: number;y: number;}[] = [];
-
-  for (let i = start; i <= end; i++) {
-    result.push(board.value[i][row]);
-    coordinates.push({x: i, y: row});
-  }
-
-  if(hasFourElements(result)) {
-    hasFourElementsCoordinates(coordinates);
-    winnerMessage.value = `${currentPlayer.value} wins - 4 pawns horizontally.`;
-  }
-}
-
-const checkDiagonalWinDownRight = (col: number, row: number) => {
-  const result: (string | null)[] = [];
-
-  const backSteps = Math.min(3, col, row);
-  const forwardSteps = Math.min(3, board.value.length - 1 - col, board.value[0].length - 1 - row);
-
-  const start = -backSteps;
-  const end = forwardSteps;
-
-  for (let offset = start; offset <= end; offset++) {
-    result.push(board.value[col + offset][row + offset]);
-  }
-
-  if(hasFourElements(result)) {
-    alert(result);
-    winnerMessage.value = `${currentPlayer.value} wins - 4 pawns diagonally \u2198`;
-  }
-}
+  socket.on("gameUpdated", () => {
+    loadBoardState();
+  });
+});
 
 
-const checkDiagonalWinUpRight = (col: number, row: number) => {
-  const result: (string | null)[] = [];
-
-  const backSteps = Math.min(3, col, board.value[0].length - 1 - row);
-  const forwardSteps = Math.min(3, board.value.length - 1 - col, row);
-
-  const start = -backSteps;
-  const end = forwardSteps;
-
-  for (let offset = start; offset <= end; offset++) {
-    result.push(board.value[col + offset][row - offset]);
-  }
-
-  if(hasFourElements(result)) {
-    alert(result);
-    winnerMessage.value = `${currentPlayer.value} wins - 4 pawns diagonally \u2197`;
-  }
-}
-
-
-const hasFourElements = (array: (string | null)[]) => {
-  for (let i = 0; i <= array.length - 4; i++) {
-    const slice = array.slice(i, i + 4);
-
-    if (slice.every(color => color === 'yellow') || slice.every(color => color === 'red')) {
-      console.log(slice + " ");
-      return true;
-    }
-  }
-
-  return false;
-}
-
-const hasFourElementsCoordinates = (array: ({x : number, y : number})[]) => {
-  for (let element in array) {
-    element = board.value[array.x][array.y];
-  }
-
-  for (let i = 0; i <= array.length - 4; i++) {
-    const slice = array.slice(i, i + 4);
-  }// wydaje mi sie ze powinno to byc w ten sposob ze tylko i wylacznie koordynaty przesyalc
-}
-
-const checkFailure = () => {
-  for (let col = 0; col < columns.value; col++) {
-    const isFull = board.value[col].every(cell => cell !== null);
-
-    if (!isFull) {
-      return;
-    }
-  }
-
-  alert("Both players loose!")
-  winnerMessage.value = `Both players loose!`;
-}
-
-
-const resetBoard = () => {
-  board.value = Array.from({ length: columns.value }, () => Array(rows.value).fill(null));
-  columnHeights.value = Array(columns.value).fill(0);
-  currentPlayer.value = 'Player Yellow';
-  movesCounter.value = 1;
-  winnerMessage.value = null;
-};
+onUnmounted(() => {
+  socket.off("gameUpdated", () => {
+    loadBoardState();
+  });
+});
 </script>
 
 <template>
@@ -173,11 +95,11 @@ const resetBoard = () => {
         @click="makeMove(colIndex)"
         :disabled="winnerMessage !== null"
         :class="[
-    'w-10 h-10 text-white rounded mb-5 transition',
-    winnerMessage === null
-      ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
-      : 'bg-gray-400 cursor-not-allowed'
-  ]"
+          'w-10 h-10 text-white rounded mb-5 transition',
+          winnerMessage === null
+            ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+            : 'bg-gray-400 cursor-not-allowed'
+        ]"
       >
         ↓
       </button>
@@ -190,7 +112,6 @@ const resetBoard = () => {
           cell === 'red' ? 'bg-red-500' : cell === 'yellow' ? 'bg-yellow-400' :'bg-gray-200'
         ]"
       ></div>
-
     </div>
   </div>
   <div class="flex justify-center mt-6">
