@@ -4,20 +4,37 @@
 Vue.js
 TypeScript
 
-### Project Setup
+
+### Client setup
 
 ```sh
+cd VierGewinntMultimodal
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### Client run
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+
+
+### Server setup
 
 ```sh
-npm run build
+cd server
+```
+
+### Server run
+
+```sh
+node server.js
+```
+
+or
+
+
+```sh
+npm run start
 ```
