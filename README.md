@@ -38,3 +38,10 @@ or
 ```sh
 npm run start
 ```
+
+
+
+### Playing game (inserting into a column) using endpoints example (column 5)
+```sh
+curl -X POST http://localhost:3000/move -H "Content-Type: application/json" -d '{"column": 5}'
+```
