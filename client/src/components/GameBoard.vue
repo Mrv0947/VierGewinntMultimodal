@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { Howl, Howler } from 'howler';
 
 const movesCounter = ref<number>(1);
 const rows = ref<number>(7);
@@ -13,9 +14,35 @@ const winnerMessage = ref<string | null>(null);
 const apiUrl = 'http://localhost:3000'; // server address
 const socket = io(apiUrl);  // client socket
 
+const drop_sound_player_yellow = new Howl({
+  src: ['/sounds/stone-sliding-1.mp3'],  // ścieżka od root URL
+  volume: 0.8
+});
+
+const drop_sound_player_red = new Howl({
+  src: ['/sounds/stone-sliding-2.mp3'],
+  volume: 0.8
+});
+
+const victory_sound = new Howl({
+  src: ['/sounds/victory.wav'],
+  volume: 0.8
+});
+
+const defeat_sound = new Howl({
+  src: ['/sounds/defeat.wav'],
+  volume: 0.8
+});
+
+const new_game = new Howl({
+  src: ['/sounds/new_game.wav'],
+  volume: 0.8
+});
+
 
 // make a move using GUI
 const makeMove = async (col: number) => {
+  new_game.stop();
   try {
     if (winnerMessage.value === null) {
       await axios.post(`${apiUrl}/move`, { column: col });
@@ -24,12 +51,24 @@ const makeMove = async (col: number) => {
     console.error('Error making move:', error);
   }
 
+  if (currentPlayer.value === "Player Yellow") {
+    drop_sound_player_yellow.play()
+  }
+  else {
+    drop_sound_player_red.play()
+  }
+
   loadBoardState();
 };
 
 
 // reset game using GUI
 const resetBoard = async () => {
+  victory_sound.stop();
+  defeat_sound.stop();
+
+  new_game.play();
+
   try {
     const response = await axios.post(`${apiUrl}/new`);
     winnerMessage.value = null;
@@ -48,11 +87,14 @@ const loadBoardState = async () => {
   try {
     const response = await axios.get(`${apiUrl}/status`);
     const status = response.data;
-    console.log("status");
-    console.log(status);
     board.value = status.board;
     currentPlayer.value = `${status.currentPlayer.charAt(0).toUpperCase() + status.currentPlayer.slice(1)}`;
     winnerMessage.value = status.winnerMessage;
+
+    if (winnerMessage.value !== null && winnerMessage.value !== "It's a draw!")
+      victory_sound.play();
+    else if (winnerMessage.value === "It's a draw!")
+      defeat_sound.play();
   } catch (error) {
     console.error('Error loading board state:', error);
   }
@@ -61,7 +103,6 @@ const loadBoardState = async () => {
 
 onMounted(() => {
   loadBoardState();
-
   socket.on("gameUpdated", () => {
     loadBoardState();
   });

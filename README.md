@@ -10,7 +10,7 @@ socket.io-client
 ### Client setup
 
 ```sh
-cd VierGewinntMultimodal
+cd client
 npm install
 ```
 
