@@ -1,11 +1,12 @@
 # Einfaches Vier-Gewinnt-Spiel
 
 ### Verwendete Technologien:
-Vue.js
+Vue.js,
 TypeScript
 
-axios
-socket.io-client
+axios,
+socket.io-client,
+Howler
 
 ### Client setup
 
