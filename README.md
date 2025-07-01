@@ -57,3 +57,14 @@ curl -X POST http://localhost:3000/new
 ```sh
 curl -X POST http://localhost:3000/status
 ```
+
+
+### Game includes following sounds:
+https://freesound.org/people/qubodup/sounds/743262/ (move player 1)
+https://freesound.org/people/qubodup/sounds/743260/ (move player 2)
+
+Victory sting 3 by Victor_Natas -- https://freesound.org/s/741975/ -- License: Attribution 4.0 (game won)
+Victory sting 4 by Victor_Natas -- https://freesound.org/s/741976/ -- License: Attribution 4.0 (draw = game lost)
+
+Kill ping by ValhallaProject -- https://freesound.org/s/761512/ -- License: Attribution 4.0 (new game)
+
