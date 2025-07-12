@@ -13,6 +13,8 @@ const currentPlayer = ref('Player Yellow');
 const winnerMessage = ref<string | null>(null);
 const recognizedGesture = ref<string>(''); // Neue Variable für erkannte Geste
 
+const fusionTable = ref<Record<string, any>>({}); // FusionTable-Objekt
+
 const apiUrl = 'http://localhost:3000'; // server address
 const socket = io(apiUrl);  // client socket
 
@@ -103,6 +105,21 @@ const loadBoardState = async () => {
       defeat_sound.play();
   } catch (error) {
     console.error('Error loading board state:', error);
+  }
+};
+
+
+// FusionTable laden
+const loadFusionTable = async () => {
+  try {
+    const response = await axios.get(`${apiUrl}/fusiontable`);
+    fusionTable.value = response.data.fusionTable || {};
+    if (fusionTable.value.column !== undefined) {
+      fusionTable.value.column = fusionTable.value.column + 1;
+    }
+    console.log(fusionTable.value.column);
+  } catch (error) {
+    //console.error('Error loading fusion table:', error);
   }
 };
 
@@ -225,8 +242,10 @@ const sendColumn = async (colIndex: number) => {
 
 onMounted(() => {
   loadBoardState();
+  loadFusionTable();
   socket.on("gameUpdated", () => {
     loadBoardState();
+    loadFusionTable();
   });
 
   if (gestureCanvas.value) {
@@ -251,6 +270,7 @@ onMounted(() => {
 onUnmounted(() => {
   socket.off("gameUpdated", () => {
     loadBoardState();
+    loadFusionTable();
   });
 
   if (gestureCanvas.value) {
@@ -265,60 +285,80 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <h2 v-if="!winnerMessage" class="text-xl text-center font-semibold mb-1">
-    Current Player: {{ currentPlayer }}
-  </h2>
-  <h2 v-else class="text-xl text-center font-semibold mb-1 text-green-600">
-    {{ winnerMessage }}
-  </h2>
-  <h5 class="text-xs text-center font-semibold mb-8">
-    Round {{ movesCounter }}
-  </h5>
-  <!-- Flex-Container für Spielfeld und Zeichenfläche -->
-  <div class="flex justify-center items-start space-x-8">
-    <!-- Spielbrett -->
-    <div class="flex space-x-1">
-      <div
-        v-for="(col, colIndex) in board"
-        :key="colIndex"
-        class="flex flex-col items-center mx-2"
-      >
-        <button
-          @click="sendColumn(colIndex)"
-          :disabled="winnerMessage !== null"
-          :class="[
-            'w-10 h-10 text-white rounded mb-5 transition',
-            winnerMessage === null
-              ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
-              : 'bg-gray-400 cursor-not-allowed'
-          ]"
-        >
-          ↓
-        </button>
-        <div
-          v-for="(cell, rowIndex) in col"
-          :key="rowIndex"
-          :class="[
-            'w-[50px] h-[50px] rounded-full border border-gray-800 m-1',
-            cell === 'red' ? 'bg-red-500' : cell === 'yellow' ? 'bg-yellow-400' :'bg-gray-200'
-          ]"
-        ></div>
+  <div class="flex flex-col items-center">
+    <!-- Spielerinfo (oben, zentriert über allem) -->
+    <h2 v-if="!winnerMessage" class="text-xl text-center font-semibold mb-1">
+      Current Player: {{ currentPlayer }}
+    </h2>
+    <h2 v-else class="text-xl text-center font-semibold mb-1 text-green-600">
+      {{ winnerMessage }}
+    </h2>
+    <h5 class="text-xs text-center font-semibold mb-8">
+      Round {{ movesCounter }}
+    </h5>
+    <div class="flex justify-center items-start space-x-8 w-full">
+      <!-- FusionTable Anzeige (links) -->
+      <div class="flex flex-col items-center mr-4">
+        <h3 class="text-lg font-semibold text-white mb-2">Fusion Table</h3>
+        <table class="min-w-[180px] border border-gray-400 text-white text-sm bg-gray-700 rounded">
+          <tbody>
+            <tr v-for="(value, key) in fusionTable" :key="key">
+              <td class="border border-gray-500 px-2 py-1 font-bold">{{ key }}</td>
+              <td class="border border-gray-500 px-2 py-1">{{ value }}</td>
+            </tr>
+            <tr v-if="Object.keys(fusionTable).length === 0">
+              <td colspan="2" class="text-center text-gray-300 px-2 py-1">leer</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </div>
-    <!-- Zeichenfläche für Gestensteuerung -->
-    <div>
-      <canvas
-        id="gesture-canvas"
-        ref="gestureCanvas"
-        width="400"
-        height="400"
-        style="border:1.5px solid #333; background: #fff; touch-action: none;"
-      >
-        Ihr Browser unterstützt kein Canvas.
-      </canvas>
-      <div class="mt-2 text-center text-sm text-white">
-        <span v-if="recognizedGesture">Erkannte Geste: <b>{{ recognizedGesture }}</b></span>
-        <span v-else>Keine Geste erkannt</span>
+      <!-- Spielfeld und Gestenfeld (rechts) -->
+      <div class="flex justify-center items-start space-x-8">
+        <!-- Spielbrett -->
+        <div class="flex space-x-1">
+          <div
+            v-for="(col, colIndex) in board"
+            :key="colIndex"
+            class="flex flex-col items-center mx-2"
+          >
+            <button
+              @click="sendColumn(colIndex)"
+              :disabled="winnerMessage !== null"
+              :class="[
+                'w-10 h-10 text-white rounded mb-5 transition',
+                winnerMessage === null
+                  ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
+                  : 'bg-gray-400 cursor-not-allowed'
+              ]"
+            >
+              ↓
+            </button>
+            <div
+              v-for="(cell, rowIndex) in col"
+              :key="rowIndex"
+              :class="[
+                'w-[50px] h-[50px] rounded-full border border-gray-800 m-1',
+                cell === 'red' ? 'bg-red-500' : cell === 'yellow' ? 'bg-yellow-400' :'bg-gray-200'
+              ]"
+            ></div>
+          </div>
+        </div>
+        <!-- Zeichenfläche für Gestensteuerung -->
+        <div>
+          <canvas
+            id="gesture-canvas"
+            ref="gestureCanvas"
+            width="400"
+            height="400"
+            style="border:1.5px solid #333; background: #fff; touch-action: none;"
+          >
+            Ihr Browser unterstützt kein Canvas.
+          </canvas>
+          <div class="mt-2 text-center text-sm text-white">
+            <span v-if="recognizedGesture">Erkannte Geste: <b>{{ recognizedGesture }}</b></span>
+            <span v-else>Keine Geste erkannt</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
