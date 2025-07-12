@@ -155,6 +155,18 @@ function DollarRecognizer() // constructor
 	this.Unistrokes.push(new Unistroke("6", [
 		new Point(230,120),new Point(200,110),new Point(170,130),new Point(170,170),new Point(200,190),new Point(230,170),new Point(200,150),new Point(170,170)
 	]));
+	// "M" Geste (für sendCommand('move') oder 'colum')
+	this.Unistrokes.push(new Unistroke("M", [
+		new Point(170,220), new Point(170,100), // linker Strich nach oben
+		new Point(200,160), // Diagonale runter zur Mitte
+		new Point(230,100), // Diagonale hoch rechts
+		new Point(230,220)  // rechter Strich nach unten
+	]));
+	// "check" Geste (Häkchen für sendConfirm)
+	this.Unistrokes.push(new Unistroke("check", [
+		new Point(170,180), new Point(190,210), // kurzer Strich nach unten rechts
+		new Point(230,130)  // langer Strich nach oben rechts
+	]));
 	//
 	// The $1 Gesture Recognizer API begins here -- 3 methods: Recognize(), AddGesture(), and DeleteUserGestures()
 	//

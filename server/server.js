@@ -30,7 +30,7 @@ app.use(bodyParser.json());
 app.get('/status', (req, res) => {
   console.log("Received /status request");
 
-  const status = { board, currentPlayer, winnerMessage };
+  const status = { board, currentPlayer, winnerMessage, fusionTable };
   res.json(status);
 });
 
@@ -43,7 +43,7 @@ app.post('/move', (req, res) => {
     return res.status(400).json({ error: 'Invalid column' });
   }
   const status = makeMove(column);
-  io.emit('gameUpdated', { board, currentPlayer, winnerMessage });
+  io.emit('gameUpdated', { board, currentPlayer, winnerMessage, fusionTable });
   res.json(status);
 });
 
@@ -55,12 +55,98 @@ app.post('/new', (req, res) => {
   res.json({ message: 'Game reset successful' });
 });
 
+app.post('/command', (req, res) => {
+  console.log("Received /command request");
+  
+  const { command } = req.body;
+  if (command !== 'new' && command !== 'move') {
+    return res.status(400).json({ error: 'Invalid command' });
+  }
+
+  addCommand(command);
+
+  io.emit('gameUpdated', { board, currentPlayer, winnerMessage, fusionTable });
+
+  res.json({fusionTable})
+});
+
+app.post('/confirm', (req, res) => {
+  console.log("Received /confirm request");
+
+  addConfirmation();
+
+  io.emit('gameUpdated', { board, currentPlayer, winnerMessage, fusionTable });
+
+  res.json({fusionTable});
+
+});
+
+app.post('/column', (req, res) => {
+  console.log("Received /column request"); 
+
+  const { column } = req.body;
+  if (typeof column !== 'number' || column < 0 || column >= 7) {
+    return res.status(400).json({ error: 'Invalid column' }); 
+  }
+
+  addColum(column);
+
+  io.emit('gameUpdated', { board, currentPlayer, winnerMessage, fusionTable });
+
+  res.json({fusionTable});
+});
+
+// Add this endpoint to provide the fusion table to the client
+app.get('/fusiontable', (req, res) => {
+  res.json({ fusionTable });
+});
+  
 
 // Server initialization
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
   resetBoard();
 });
+
+//multimodal fusion
+let fusionTable = {}; // immer ein Objekt!
+
+const addCommand = (command) => {
+  if (fusionTable.command !== command) {
+    fusionTable = { command };
+    console.log('[fusion] addCommand:', fusionTable);
+    io.emit('fusionTableUpdated', fusionTable);
+  }
+}
+
+const addConfirmation = () => {
+  fusionTable = { ...fusionTable, confirmation: true };
+  console.log('[fusion] addConfirmation:', fusionTable);
+  io.emit('fusionTableUpdated', fusionTable);
+  checkFusionTable();
+}
+
+const addColum = (column) => {
+  fusionTable = { ...fusionTable, column };
+  console.log('[fusion] addColum:', fusionTable);
+  io.emit('fusionTableUpdated', fusionTable);
+  checkFusionTable();
+}
+
+const checkFusionTable = () => {
+  console.log('[fusion] checkFusionTable:', fusionTable);
+  if (fusionTable.command === 'new' && fusionTable.confirmation === true) {
+    resetBoard();
+    fusionTable = {};
+    console.log('[fusion] reset after new:', fusionTable);
+    io.emit('fusionTableUpdated', fusionTable);
+  } else if (fusionTable.command === 'move' && fusionTable.confirmation === true && fusionTable.column !== undefined) {
+    makeMove(fusionTable.column);
+    fusionTable = {};
+    console.log('[fusion] reset after move:', fusionTable);
+    io.emit('fusionTableUpdated', fusionTable);
+  }
+}
 
 
 // Game logic part
@@ -210,3 +296,4 @@ io.on('connection', (socket) => {
     console.log('A user disconnected');
   });
 });
+

@@ -109,6 +109,7 @@ const loadBoardState = async () => {
 // Zeichenlogik für das Canvas
 const gestureCanvas = ref<HTMLCanvasElement | null>(null);
 let drawing = false;
+let newGesture = false;
 let ctx: CanvasRenderingContext2D | null = null;
 
 // Für Gestenerkennung
@@ -135,6 +136,7 @@ const startDrawing = (e: MouseEvent | TouchEvent) => {
     ctx.clearRect(0, 0, gestureCanvas.value.width, gestureCanvas.value.height);
   }
   drawing = true;
+  newGesture = true;
   gesturePoints = [];
   if (!ctx) return;
   const pos = getPos(e);
@@ -152,33 +154,67 @@ const draw = (e: MouseEvent | TouchEvent) => {
 };
 
 const stopDrawing = () => {
+  if (!newGesture) return;
+  newGesture = false;
   drawing = false;
   if (ctx) ctx.closePath();
 
   if (gesturePoints.length > 10) {
     const points = gesturePoints.map(p => new (Point as any)(p.x, p.y));
-    const result = recognizer.Recognize(points, false);
+    let result = recognizer.Recognize(points, false);
     console.log('Erkannte Geste:', result?.Name, 'Score:', result?.Score);
     if (result ) {
       if (result.Name === '0') { // Circle
-        resetBoard();
+        sendCommand('new');
       } else if (result.Name === '1') { // 1
-        makeMove(0);
+        sendColumn(0);
       } else if (result.Name === '2') { // 2
-        makeMove(1);
+        sendColumn(1);
       } else if (result.Name === '3') { // 3
-        makeMove(2);
+        sendColumn(2);
       } else if (result.Name === '4') { // 4
-        makeMove(3);
+        sendColumn(3);
       } else if (result.Name === '5') { // 5
-        makeMove(4);
+        sendColumn(4);
       } else if (result.Name === '6') { // 6
-        makeMove(5);
+        sendColumn(5);
+      } else if (result.Name === 'M') { // M-Geste
+        sendCommand('move');
+      } else if (result.Name === 'check') { // Häkchen-Geste
+        sendConfirm();
       }
     }
   }
 };
 
+
+// Neue Funktionen für die Buttons
+const sendCommand = async (command: 'new' | 'move') => {
+  try {
+    const response = await axios.post(`${apiUrl}/command`, { command });
+    console.log(`/command response:`, response.data);
+  } catch (error) {
+    console.error(`Error sending command '${command}':`, error);
+  }
+};
+
+const sendConfirm = async () => {
+  try {
+    const response = await axios.post(`${apiUrl}/confirm`, {});
+    console.log(`/confirm response:`, response.data);
+  } catch (error) {
+    console.error('Error sending confirm:', error);
+  }
+};
+
+const sendColumn = async (colIndex: number) => {
+  try {
+    const response = await axios.post(`${apiUrl}/column`, { column: colIndex });
+    console.log(`/column response:`, response.data);
+  } catch (error) {
+    console.error(`Error sending column '${colIndex}':`, error);
+  }
+};
 
 
 onMounted(() => {
@@ -242,7 +278,7 @@ onUnmounted(() => {
         class="flex flex-col items-center mx-2"
       >
         <button
-          @click="makeMove(colIndex)"
+          @click="sendColumn(colIndex)"
           :disabled="winnerMessage !== null"
           :class="[
             'w-10 h-10 text-white rounded mb-5 transition',
@@ -278,10 +314,22 @@ onUnmounted(() => {
   </div>
   <div class="flex justify-center mt-6">
     <button
-      @click="resetBoard"
+      @click="sendCommand('new')"
       class="px-6 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
     >
       Reset
+    </button>
+    <button
+      @click="sendCommand('move')"
+      class="ml-4 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+    >
+      Move
+    </button>
+    <button
+      @click="sendConfirm"
+      class="ml-4 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+    >
+      Confirm
     </button>
   </div>
 </template>
