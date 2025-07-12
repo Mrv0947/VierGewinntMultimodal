@@ -11,6 +11,7 @@ const columns = ref<number>(6);
 const board = ref<(null | 'red' | 'yellow')[][]>(Array.from({ length: columns.value }, () => Array(rows.value).fill(null)));
 const currentPlayer = ref('Player Yellow');
 const winnerMessage = ref<string | null>(null);
+const recognizedGesture = ref<string>(''); // Neue Variable für erkannte Geste
 
 const apiUrl = 'http://localhost:3000'; // server address
 const socket = io(apiUrl);  // client socket
@@ -164,26 +165,31 @@ const stopDrawing = () => {
     let result = recognizer.Recognize(points, false);
     console.log('Erkannte Geste:', result?.Name, 'Score:', result?.Score);
     if (result ) {
-      if (result.Name === '0') { // Circle
+      recognizedGesture.value = result.Name; // Geste speichern
+      if (result.Name === 'Reset') { // Circle
         sendCommand('new');
-      } else if (result.Name === '1') { // 1
+      } else if (result.Name === 'Column 1') { // 1
         sendColumn(0);
-      } else if (result.Name === '2') { // 2
+      } else if (result.Name === 'Column 2') { // 2
         sendColumn(1);
-      } else if (result.Name === '3') { // 3
+      } else if (result.Name === 'Column 3') { // 3
         sendColumn(2);
-      } else if (result.Name === '4') { // 4
+      } else if (result.Name === 'Column 4') { // 4
         sendColumn(3);
-      } else if (result.Name === '5') { // 5
+      } else if (result.Name === 'Column 5') { // 5
         sendColumn(4);
-      } else if (result.Name === '6') { // 6
+      } else if (result.Name === 'Column 6') { // 6
         sendColumn(5);
-      } else if (result.Name === 'M') { // M-Geste
+      } else if (result.Name === 'Move') { // M-Geste
         sendCommand('move');
-      } else if (result.Name === 'check') { // Häkchen-Geste
+      } else if (result.Name === 'Confirm') { // Häkchen-Geste
         sendConfirm();
       }
+    } else {
+      recognizedGesture.value = ''; // Keine Geste erkannt
     }
+  } else {
+    recognizedGesture.value = ''; // Zu wenig Punkte
   }
 };
 
@@ -310,6 +316,10 @@ onUnmounted(() => {
       >
         Ihr Browser unterstützt kein Canvas.
       </canvas>
+      <div class="mt-2 text-center text-sm text-white">
+        <span v-if="recognizedGesture">Erkannte Geste: <b>{{ recognizedGesture }}</b></span>
+        <span v-else>Keine Geste erkannt</span>
+      </div>
     </div>
   </div>
   <div class="flex justify-center mt-6">

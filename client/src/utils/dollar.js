@@ -127,43 +127,43 @@ function DollarRecognizer() // constructor
 	// Nur die gewünschten Gesten als Templates:
 	//
 	this.Unistrokes = [];
-	this.Unistrokes.push(new Unistroke("0", [
+	this.Unistrokes.push(new Unistroke("Reset", [
 		new Point(200,100),new Point(170,110),new Point(150,140),new Point(150,180),new Point(170,210),new Point(200,220),new Point(230,210),new Point(250,180),new Point(250,140),new Point(230,110),new Point(200,100)
 	]));
-	this.Unistrokes.push(new Unistroke("1", [
+	this.Unistrokes.push(new Unistroke("Column 1", [
 		new Point(190,90),  // Start links unten der Diagonale
 		new Point(210,70),  // Diagonale nach rechts oben
 		new Point(210,70),  // Knickpunkt
 		new Point(210,220)  // Senkrechte nach unten
 	]));
-	this.Unistrokes.push(new Unistroke("2", [
+	this.Unistrokes.push(new Unistroke("Column 2", [
 		new Point(160,120), new Point(180,100), new Point(220,100), new Point(240,120), new Point(240,150), new Point(160,220), new Point(240,220)
 	]));
-	this.Unistrokes.push(new Unistroke("3", [
+	this.Unistrokes.push(new Unistroke("Column 3", [
 		new Point(170,110), new Point(200,100), new Point(230,110), new Point(220,150), new Point(230,190), new Point(200,200), new Point(170,190)
 	]));
 	// "4": Diagonale nach links unten, dann waagerecht nach rechts
-	this.Unistrokes.push(new Unistroke("4", [
+	this.Unistrokes.push(new Unistroke("Column 4", [
 		new Point(230,120), // Start rechts oben
 		new Point(170,180), // Diagonale nach links unten
 		new Point(170,180), // Knickpunkt
 		new Point(230,180)  // Waagerecht nach rechts
 	]));
-	this.Unistrokes.push(new Unistroke("5", [
+	this.Unistrokes.push(new Unistroke("Column 5", [
 		new Point(240,120),new Point(180,120),new Point(180,150),new Point(220,150),new Point(240,170),new Point(220,190),new Point(180,190)
 	]));
-	this.Unistrokes.push(new Unistroke("6", [
+	this.Unistrokes.push(new Unistroke("Column 6", [
 		new Point(230,120),new Point(200,110),new Point(170,130),new Point(170,170),new Point(200,190),new Point(230,170),new Point(200,150),new Point(170,170)
 	]));
 	// "M" Geste (für sendCommand('move') oder 'colum')
-	this.Unistrokes.push(new Unistroke("M", [
+	this.Unistrokes.push(new Unistroke("Move", [
 		new Point(170,220), new Point(170,100), // linker Strich nach oben
 		new Point(200,160), // Diagonale runter zur Mitte
 		new Point(230,100), // Diagonale hoch rechts
 		new Point(230,220)  // rechter Strich nach unten
 	]));
 	// "check" Geste (Häkchen für sendConfirm)
-	this.Unistrokes.push(new Unistroke("check", [
+	this.Unistrokes.push(new Unistroke("Confirm", [
 		new Point(170,180), new Point(190,210), // kurzer Strich nach unten rechts
 		new Point(230,130)  // langer Strich nach oben rechts
 	]));
