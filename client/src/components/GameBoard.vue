@@ -285,37 +285,44 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col items-center">
-    <!-- Spielerinfo (oben, zentriert über allem) -->
-    <h2 v-if="!winnerMessage" class="text-xl text-center font-semibold mb-1">
-      Current Player: {{ currentPlayer }}
-    </h2>
-    <h2 v-else class="text-xl text-center font-semibold mb-1 text-green-600">
-      {{ winnerMessage }}
-    </h2>
-    <h5 class="text-xs text-center font-semibold mb-8">
-      Round {{ movesCounter }}
-    </h5>
-    <div class="flex justify-center items-start space-x-8 w-full">
-      <!-- FusionTable Anzeige (links) -->
-      <div class="flex flex-col items-center mr-4">
-        <h3 class="text-lg font-semibold text-white mb-2">Fusion Table</h3>
-        <table class="min-w-[180px] border border-gray-400 text-white text-sm bg-gray-700 rounded">
-          <tbody>
-            <tr v-for="(value, key) in fusionTable" :key="key">
-              <td class="border border-gray-500 px-2 py-1 font-bold">{{ key }}</td>
-              <td class="border border-gray-500 px-2 py-1">{{ value }}</td>
-            </tr>
-            <tr v-if="Object.keys(fusionTable).length === 0">
-              <td colspan="2" class="text-center text-gray-300 px-2 py-1">leer</td>
-            </tr>
-          </tbody>
-        </table>
+  <div class="flex flex-col items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 py-2">
+    <!-- Grid-Layout für Spielinfo, Spielfeld, Gestenfeld -->
+    <div class="grid grid-cols-3 w-full items-center mt-4" style="max-width: 100vw;">
+      <!-- Spielinfo (links, weiter nach außen) -->
+      <div class="flex flex-col items-center justify-center h-full pl-20">
+        <div class="bg-gray-800 rounded-xl shadow-lg p-4 mb-2 w-[350px] h-[380px] flex flex-col justify-center mx-auto">
+          <h3 class="text-lg font-semibold text-white mb-2 text-center">Spielinfo</h3>
+          <div class="mb-2 text-center">
+            <span v-if="!winnerMessage" class="font-semibold text-gray-200 block mb-1">
+              Current Player:
+              <span :class="currentPlayer === 'Player Yellow' ? 'text-yellow-300 font-bold' : 'text-red-400 font-bold'">
+                {{ currentPlayer }}
+              </span>
+            </span>
+            <span v-else class="font-semibold text-green-400 block mb-1">
+              {{ winnerMessage }}
+            </span>
+            <span class="text-xs text-gray-300 font-semibold tracking-wider block">
+              Round {{ movesCounter }}
+            </span>
+          </div>
+          <h4 class="text-base font-semibold text-white mb-2 text-center">Fusion Table</h4>
+          <table class="min-w-[180px] border border-gray-600 text-white text-sm bg-gray-700 rounded overflow-hidden shadow mx-auto">
+            <tbody>
+              <tr v-for="(value, key) in fusionTable" :key="key">
+                <td class="border border-gray-600 px-2 py-1 font-bold bg-gray-800">{{ key }}</td>
+                <td class="border border-gray-600 px-2 py-1">{{ value }}</td>
+              </tr>
+              <tr v-if="Object.keys(fusionTable).length === 0">
+                <td colspan="2" class="text-center text-gray-300 px-2 py-1">leer</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <!-- Spielfeld und Gestenfeld (rechts) -->
-      <div class="flex justify-center items-start space-x-8">
-        <!-- Spielbrett -->
-        <div class="flex space-x-1">
+      <!-- Spielfeld (zentriert, volle Breite) -->
+      <div class="flex justify-center items-center w-full">
+        <div class="flex space-x-1 bg-gray-800 rounded-2xl shadow-xl p-6">
           <div
             v-for="(col, colIndex) in board"
             :key="colIndex"
@@ -325,7 +332,7 @@ onUnmounted(() => {
               @click="sendColumn(colIndex)"
               :disabled="winnerMessage !== null"
               :class="[
-                'w-10 h-10 text-white rounded mb-5 transition',
+                'w-10 h-10 text-white rounded-full mb-5 transition shadow',
                 winnerMessage === null
                   ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
                   : 'bg-gray-400 cursor-not-allowed'
@@ -337,50 +344,60 @@ onUnmounted(() => {
               v-for="(cell, rowIndex) in col"
               :key="rowIndex"
               :class="[
-                'w-[50px] h-[50px] rounded-full border border-gray-800 m-1',
-                cell === 'red' ? 'bg-red-500' : cell === 'yellow' ? 'bg-yellow-400' :'bg-gray-200'
+                'w-[50px] h-[50px] rounded-full border-2 border-gray-900 m-1 shadow-md transition-all duration-200',
+                cell === 'red' ? 'bg-gradient-to-br from-red-500 to-red-700 shadow-red-700/40' : cell === 'yellow' ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-yellow-400/40' :'bg-gray-200'
               ]"
             ></div>
           </div>
         </div>
-        <!-- Zeichenfläche für Gestensteuerung -->
-        <div>
+      </div>
+      <!-- Gestenfeld (rechts, weiter nach außen) -->
+      <div class="flex flex-col items-center justify-center h-full pr-20">
+        <div class="bg-gray-800 rounded-xl shadow-lg p-4 w-[350px] h-[380px] flex flex-col justify-center">
           <canvas
             id="gesture-canvas"
             ref="gestureCanvas"
-            width="400"
-            height="400"
-            style="border:1.5px solid #333; background: #fff; touch-action: none;"
+            width="320"
+            height="320"
+            class="rounded-lg border-2 border-blue-400 shadow-lg bg-white mx-auto"
+            style="touch-action: none;"
           >
             Ihr Browser unterstützt kein Canvas.
           </canvas>
-          <div class="mt-2 text-center text-sm text-white">
-            <span v-if="recognizedGesture">Erkannte Geste: <b>{{ recognizedGesture }}</b></span>
-            <span v-else>Keine Geste erkannt</span>
+          <div class="mt-3 text-center text-base text-white">
+            <span v-if="recognizedGesture">Erkannte Geste: <b class="text-blue-300">{{ recognizedGesture }}</b></span>
+            <span v-else class="text-gray-300">Keine Geste erkannt</span>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="flex justify-center mt-6">
-    <button
-      @click="sendCommand('new')"
-      class="px-6 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-    >
-      Reset
-    </button>
-    <button
-      @click="sendCommand('move')"
-      class="ml-4 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-    >
-      Move
-    </button>
-    <button
-      @click="sendConfirm"
-      class="ml-4 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
-    >
-      Confirm
-    </button>
+    <!-- Button-Leiste -->
+    <div class="flex justify-center mt-4 space-x-4">
+      <button
+        @click="sendCommand('new')"
+        class="px-8 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg font-semibold shadow hover:scale-105 hover:from-red-600 hover:to-red-800 transition-all duration-150"
+      >
+        Reset
+      </button>
+      <button
+        @click="sendCommand('move')"
+        :disabled="winnerMessage !== null"
+        :class="[
+          'px-8 py-2 rounded-lg font-semibold shadow hover:scale-105 transition-all duration-150',
+          winnerMessage === null
+            ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800'
+            : 'bg-gray-400 text-white cursor-not-allowed'
+        ]"
+      >
+        Move
+      </button>
+      <button
+        @click="sendConfirm"
+        class="px-8 py-2 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-lg font-semibold shadow hover:scale-105 hover:from-green-600 hover:to-green-800 transition-all duration-150"
+      >
+        Confirm
+      </button>
+    </div>
   </div>
 </template>
 
