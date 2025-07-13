@@ -112,11 +112,11 @@ server.listen(port, () => {
 let fusionTable = {}; // immer ein Objekt!
 
 const addCommand = (command) => {
-  if (fusionTable.command !== command) {
-    fusionTable = { command };
+    fusionTable = { ...fusionTable, command };
     console.log('[fusion] addCommand:', fusionTable);
     io.emit('fusionTableUpdated', fusionTable);
-  }
+    checkFusionTable();
+  
 }
 
 const addConfirmation = () => {
