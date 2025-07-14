@@ -349,7 +349,7 @@ onUnmounted(() => {
       </div>
       <!-- Gestenfeld (rechts, weiter nach außen) -->
       <div class="flex flex-col items-center justify-center h-full pr-20">
-        <div class="bg-[#293e56] rounded-xl shadow-lg p-4 w-[350px] h-[620px] flex flex-col justify-center">
+        <div class="bg-[#293e56] rounded-xl shadow-lg p-4 w-[360px] h-[620px] flex flex-col justify-center">
         <canvas
             id="gesture-canvas"
             ref="gestureCanvas"
