@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { Howl, Howler } from 'howler';
@@ -13,34 +13,40 @@ const currentPlayer = ref('Player Yellow');
 const winnerMessage = ref<string | null>(null);
 const recognizedGesture = ref<string>(''); // Neue Variable für erkannte Geste
 
-const fusionTable = ref<Record<string, any>>({}); // FusionTable-Objekt
+const fusionTable = ref<Record<string, any>>({
+  column: null,
+  confirmation: null,
+  command: null
+}); // FusionTable-Objekt
+
+const keys = ['column', 'command', 'confirmation'];
 
 const apiUrl = 'http://localhost:3000'; // server address
 const socket = io(apiUrl);  // client socket
 
 const drop_sound_player_yellow = new Howl({
-  src: ['/sounds/stone-sliding-1.mp3'],  // ścieżka od root URL
-  volume: 0.8
+  src: ['/sounds/stone-sliding-1.mp3'],
+  volume: 0.5
 });
 
 const drop_sound_player_red = new Howl({
   src: ['/sounds/stone-sliding-2.mp3'],
-  volume: 0.8
+  volume: 0.5
 });
 
 const victory_sound = new Howl({
   src: ['/sounds/victory.wav'],
-  volume: 0.8
+  volume: 0.5
 });
 
 const defeat_sound = new Howl({
   src: ['/sounds/defeat.wav'],
-  volume: 0.8
+  volume: 0.5
 });
 
 const new_game = new Howl({
   src: ['/sounds/new_game.wav'],
-  volume: 0.8
+  volume: 0.5
 });
 
 
@@ -48,47 +54,18 @@ const new_game = new Howl({
 const recognizer = new (DollarRecognizer as any)();
 
 
-// make a move using GUI
-const makeMove = async (col: number) => {
-  new_game.stop();
-  try {
-    if (winnerMessage.value === null) {
-      await axios.post(`${apiUrl}/move`, { column: col });
-    }
-  } catch (error) {
-    console.error('Error making move:', error);
+watch(winnerMessage, (newVal, oldVal) => {
+  if (oldVal === null && newVal !== null && newVal !== "It's a draw!") {
+    victory_sound.play();
   }
-
-  if (currentPlayer.value === "Player Yellow") {
-    drop_sound_player_yellow.play()
+  else if (oldVal === null && newVal === "It's a draw!") {
+    defeat_sound.play();
   }
-  else {
-    drop_sound_player_red.play()
+  else if (newVal === null) {
+    victory_sound.stop();
+    defeat_sound.stop();
   }
-
-  loadBoardState();
-};
-
-
-// reset game using GUI
-const resetBoard = async () => {
-  victory_sound.stop();
-  defeat_sound.stop();
-
-  new_game.play();
-
-  try {
-    const response = await axios.post(`${apiUrl}/new`);
-    winnerMessage.value = null;
-    movesCounter.value = 1;
-    currentPlayer.value = 'Player Yellow';
-  } catch (error) {
-    console.error('Error resetting board:', error);
-  }
-
-  loadBoardState();
-};
-
+});
 
 // Ask the server for current board/game state
 const loadBoardState = async () => {
@@ -98,11 +75,7 @@ const loadBoardState = async () => {
     board.value = status.board;
     currentPlayer.value = `${status.currentPlayer.charAt(0).toUpperCase() + status.currentPlayer.slice(1)}`;
     winnerMessage.value = status.winnerMessage;
-
-    if (winnerMessage.value !== null && winnerMessage.value !== "It's a draw!")
-      victory_sound.play();
-    else if (winnerMessage.value === "It's a draw!")
-      defeat_sound.play();
+    console.log("[loadBoardState] winnerMessage = ", winnerMessage.value);
   } catch (error) {
     console.error('Error loading board state:', error);
   }
@@ -224,6 +197,19 @@ const sendCommand = async (command: 'new' | 'move') => {
 const sendConfirm = async () => {
   try {
     const response = await axios.post(`${apiUrl}/confirm`, {});
+
+    // sounds
+    if(fusionTable.value.command === 'new')
+      new_game.play();
+    else if (fusionTable.value.command === 'move' && currentPlayer.value === "Player Yellow") {
+      console.log("currentPlayer1");
+      drop_sound_player_yellow.play()
+    }
+    else if (fusionTable.value.command === 'move' && currentPlayer.value === "Player Red") {
+      console.log("currentPlayer2");
+      drop_sound_player_red.play()
+    }
+
     console.log(`/confirm response:`, response.data);
   } catch (error) {
     console.error('Error sending confirm:', error);
@@ -243,6 +229,7 @@ const sendColumn = async (colIndex: number) => {
 onMounted(() => {
   loadBoardState();
   loadFusionTable();
+
   socket.on("gameUpdated", () => {
     loadBoardState();
     loadFusionTable();
@@ -290,8 +277,8 @@ onUnmounted(() => {
     <div class="grid grid-cols-3 w-full items-center mt-4" style="max-width: 100vw;">
       <!-- Spielinfo (links, weiter nach außen) -->
       <div class="flex flex-col items-center justify-center h-full pl-20">
-        <div class="bg-gray-800 rounded-xl shadow-lg p-4 mb-2 w-[350px] h-[380px] flex flex-col justify-center mx-auto">
-          <h3 class="text-lg font-semibold text-white mb-2 text-center">Spielinfo</h3>
+        <div class="bg-[#293e56] rounded-xl shadow-lg p-4 mb-2 w-[350px] h-[620px] flex flex-col justify-center mx-auto">
+          <h3 class="text-lg font-semibold text-white mb-2 text-center">Game info</h3>
           <div class="mb-2 text-center">
             <span v-if="!winnerMessage" class="font-semibold text-gray-200 block mb-1">
               Current Player:
@@ -306,23 +293,32 @@ onUnmounted(() => {
               Round {{ movesCounter }}
             </span>
           </div>
-          <h4 class="text-base font-semibold text-white mb-2 text-center">Fusion Table</h4>
+          <h4 class="text-base font-semibold text-white mb-2 mt-8 text-center">Fusion Table</h4>
           <table class="min-w-[180px] border border-gray-600 text-white text-sm bg-gray-700 rounded overflow-hidden shadow mx-auto">
             <tbody>
-              <tr v-for="(value, key) in fusionTable" :key="key">
-                <td class="border border-gray-600 px-2 py-1 font-bold bg-gray-800">{{ key }}</td>
-                <td class="border border-gray-600 px-2 py-1">{{ value }}</td>
-              </tr>
-              <tr v-if="Object.keys(fusionTable).length === 0">
-                <td colspan="2" class="text-center text-gray-300 px-2 py-1">leer</td>
-              </tr>
+            <tr v-for="key in keys" :key="key">
+              <td class="border bg-[#293e56] px-2 py-1 font-bold bg-gray-800">{{ key }}</td>
+              <td class="border bg-[#293e56] px-2 py-1">
+                {{ fusionTable[key] ?? '—' }}
+              </td>
+            </tr>
             </tbody>
           </table>
+          <h3 class="text-lg font-semibold text-white mb-2 mt-8 text-center">Instructions</h3>
+          <p class="text-white">Each full move consists of three steps:</p>
+          <ol class="text-white list-decimal list-inside">
+            <li>Select a column to drop your pawn into.</li>
+            <li>Use "move" command.</li>
+            <li>Use "confirm" command to finalize the move.</li>
+          </ol>
+          <p class="text-white mt-4">To reset game use "reset" and "confirm".</p>
+          <p class="text-white mt-4">Possible modalities: mouse, gestures, voice.</p>
+          <p class="text-white">Modalities can be mixed for different kinds of actions.</p>
         </div>
       </div>
       <!-- Spielfeld (zentriert, volle Breite) -->
       <div class="flex justify-center items-center w-full">
-        <div class="flex space-x-1 bg-gray-800 rounded-2xl shadow-xl p-6">
+        <div class="flex space-x-1 bg-[#293e56] rounded-2xl shadow-xl p-6">
           <div
             v-for="(col, colIndex) in board"
             :key="colIndex"
@@ -344,7 +340,7 @@ onUnmounted(() => {
               v-for="(cell, rowIndex) in col"
               :key="rowIndex"
               :class="[
-                'w-[50px] h-[50px] rounded-full border-2 border-gray-900 m-1 shadow-md transition-all duration-200',
+                'w-[50px] h-[50px] rounded-full border-2 border-gray-900 m-1 shadow-md transition-all duration-800',
                 cell === 'red' ? 'bg-gradient-to-br from-red-500 to-red-700 shadow-red-700/40' : cell === 'yellow' ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-yellow-400/40' :'bg-gray-200'
               ]"
             ></div>
@@ -353,8 +349,8 @@ onUnmounted(() => {
       </div>
       <!-- Gestenfeld (rechts, weiter nach außen) -->
       <div class="flex flex-col items-center justify-center h-full pr-20">
-        <div class="bg-gray-800 rounded-xl shadow-lg p-4 w-[350px] h-[380px] flex flex-col justify-center">
-          <canvas
+        <div class="bg-[#293e56] rounded-xl shadow-lg p-4 w-[350px] h-[620px] flex flex-col justify-center">
+        <canvas
             id="gesture-canvas"
             ref="gestureCanvas"
             width="320"
@@ -365,17 +361,26 @@ onUnmounted(() => {
             Ihr Browser unterstützt kein Canvas.
           </canvas>
           <div class="mt-3 text-center text-base text-white">
-            <span v-if="recognizedGesture">Erkannte Geste: <b class="text-blue-300">{{ recognizedGesture }}</b></span>
-            <span v-else class="text-gray-300">Keine Geste erkannt</span>
+            <span v-if="recognizedGesture">Recognized gesture: <b class="text-blue-300">{{ recognizedGesture }}</b></span>
+            <span v-else class="text-gray-300">Gesture not recognized.</span>
+          </div>
+          <div class="mt-8 text-base text-white">
+            Available gestures:
+            <ul class="list-disc pl-5">
+              <li><strong class="font-bold">Number 1-6</strong>: choose a column</li>
+              <li><strong class="font-bold">Letter "M"</strong>: "move" command.</li>
+              <li><strong class="font-bold">Sign ✓</strong>: "confirm" command.</li>
+              <li><strong class="font-bold">Letter "O" (circle)</strong>: reset the board</li>
+            </ul>
           </div>
         </div>
       </div>
     </div>
     <!-- Button-Leiste -->
-    <div class="flex justify-center mt-4 space-x-4">
+    <div class="flex justify-center mt-4 space-x-4 gap-4">
       <button
         @click="sendCommand('new')"
-        class="px-8 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg font-semibold shadow hover:scale-105 hover:from-red-600 hover:to-red-800 transition-all duration-150"
+        class="px-8 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg font-semibold shadow hover:from-red-600 hover:to-red-800"
       >
         Reset
       </button>
@@ -383,7 +388,7 @@ onUnmounted(() => {
         @click="sendCommand('move')"
         :disabled="winnerMessage !== null"
         :class="[
-          'px-8 py-2 rounded-lg font-semibold shadow hover:scale-105 transition-all duration-150',
+          'px-8 py-2 rounded-lg font-semibold shadow',
           winnerMessage === null
             ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800'
             : 'bg-gray-400 text-white cursor-not-allowed'
@@ -393,11 +398,10 @@ onUnmounted(() => {
       </button>
       <button
         @click="sendConfirm"
-        class="px-8 py-2 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-lg font-semibold shadow hover:scale-105 hover:from-green-600 hover:to-green-800 transition-all duration-150"
+        class="px-8 py-2 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-lg font-semibold shadow hover:from-green-600 hover:to-green-800"
       >
         Confirm
       </button>
     </div>
   </div>
 </template>
-
