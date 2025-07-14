@@ -328,7 +328,7 @@ onUnmounted(() => {
               @click="sendColumn(colIndex)"
               :disabled="winnerMessage !== null"
               :class="[
-                'w-10 h-10 text-white rounded-full mb-5 transition shadow',
+                'w-13 h-13 text-white rounded-full mb-5 transition shadow',
                 winnerMessage === null
                   ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
                   : 'bg-gray-400 cursor-not-allowed'
@@ -340,7 +340,7 @@ onUnmounted(() => {
               v-for="(cell, rowIndex) in col"
               :key="rowIndex"
               :class="[
-                'w-[50px] h-[50px] rounded-full border-2 border-gray-900 m-1 shadow-md transition-all duration-800',
+                'w-[60px] h-[60px] rounded-full border-2 border-gray-900 m-1 shadow-md transition-all duration-800',
                 cell === 'red' ? 'bg-gradient-to-br from-red-500 to-red-700 shadow-red-700/40' : cell === 'yellow' ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-yellow-400/40' :'bg-gray-200'
               ]"
             ></div>
@@ -377,10 +377,10 @@ onUnmounted(() => {
       </div>
     </div>
     <!-- Button-Leiste -->
-    <div class="flex justify-center mt-4 space-x-4 gap-4">
+    <div class="flex justify-center mt-4 space-x-4 gap-8">
       <button
         @click="sendCommand('new')"
-        class="px-8 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg font-semibold shadow hover:from-red-600 hover:to-red-800"
+        class="px-10 py-3 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg font-semibold shadow hover:from-red-600 hover:to-red-800"
       >
         Reset
       </button>
@@ -388,7 +388,7 @@ onUnmounted(() => {
         @click="sendCommand('move')"
         :disabled="winnerMessage !== null"
         :class="[
-          'px-8 py-2 rounded-lg font-semibold shadow',
+          'px-10 py-3 rounded-lg font-semibold shadow',
           winnerMessage === null
             ? 'bg-gradient-to-r from-blue-500 to-blue-700 text-white hover:from-blue-600 hover:to-blue-800'
             : 'bg-gray-400 text-white cursor-not-allowed'
@@ -398,7 +398,7 @@ onUnmounted(() => {
       </button>
       <button
         @click="sendConfirm"
-        class="px-8 py-2 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-lg font-semibold shadow hover:from-green-600 hover:to-green-800"
+        class="px-10 py-3 bg-gradient-to-r from-green-500 to-green-700 text-white rounded-lg font-semibold shadow hover:from-green-600 hover:to-green-800"
       >
         Confirm
       </button>
