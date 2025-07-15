@@ -154,7 +154,7 @@ const stopDrawing = () => {
     const points = gesturePoints.map(p => new (Point as any)(p.x, p.y));
     let result = recognizer.Recognize(points, false);
     console.log('Erkannte Geste:', result?.Name, 'Score:', result?.Score);
-    if (result ) {
+    if (result) {
       recognizedGesture.value = result.Name; // Geste speichern
       if (result.Name === 'Reset') { // Circle
         sendCommand('new');
@@ -311,7 +311,7 @@ onUnmounted(() => {
             <li>Use "move" command.</li>
             <li>Use "confirm" command to finalize the move.</li>
           </ul>
-          <p class="text-white mt-4">To reset game use "reset" and "confirm".</p>
+          <p class="text-white mt-4">To reset game use "New game" and "Confirm".</p>
           <p class="text-white mt-4">Possible modalities: mouse, gestures, voice.</p>
           <p class="text-white">Modalities can be mixed for different kinds of actions.</p>
         </div>
@@ -370,7 +370,7 @@ onUnmounted(() => {
               <li><strong class="font-bold">Number 1-6</strong>: choose a column</li>
               <li><strong class="font-bold">Letter "M"</strong>: "move" command.</li>
               <li><strong class="font-bold">Sign ✓</strong>: "confirm" command.</li>
-              <li><strong class="font-bold">Letter "O" (circle)</strong>: reset the board</li>
+              <li><strong class="font-bold">Letter "O" (circle)</strong>: "new game" command</li>
             </ul>
           </div>
         </div>
@@ -382,7 +382,7 @@ onUnmounted(() => {
         @click="sendCommand('new')"
         class="px-10 py-3 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg font-semibold shadow hover:from-red-600 hover:to-red-800"
       >
-        Reset
+        New game
       </button>
       <button
         @click="sendCommand('move')"
