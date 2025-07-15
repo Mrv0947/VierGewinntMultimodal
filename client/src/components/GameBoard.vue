@@ -198,16 +198,8 @@ const sendConfirm = async () => {
   try {
     const response = await axios.post(`${apiUrl}/confirm`, {});
 
-    // sounds
-    if(fusionTable.value.command === 'new')
+    if(fusionTable.value.command === 'new') {
       new_game.play();
-    else if (fusionTable.value.command === 'move' && currentPlayer.value === "Player Yellow") {
-      console.log("currentPlayer1");
-      drop_sound_player_yellow.play()
-    }
-    else if (fusionTable.value.command === 'move' && currentPlayer.value === "Player Red") {
-      console.log("currentPlayer2");
-      drop_sound_player_red.play()
     }
 
     console.log(`/confirm response:`, response.data);
@@ -230,9 +222,22 @@ onMounted(() => {
   loadBoardState();
   loadFusionTable();
 
-  socket.on("gameUpdated", () => {
-    loadBoardState();
-    loadFusionTable();
+  socket.on("gameUpdated", async () => {
+      const oldPlayer = currentPlayer.value;
+
+      await loadBoardState();
+      await loadFusionTable();
+
+      const newPlayer = currentPlayer.value;
+
+      if (oldPlayer !== newPlayer) {
+          if (oldPlayer === "Player Yellow") {
+              drop_sound_player_yellow.play();
+          }
+          else if (oldPlayer === "Player Red") {
+              drop_sound_player_red.play();
+          }
+      }
   });
 
   if (gestureCanvas.value) {
