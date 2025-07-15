@@ -306,11 +306,11 @@ onUnmounted(() => {
           </table>
           <h3 class="text-lg font-semibold text-white mb-2 mt-8 text-center">Instructions</h3>
           <p class="text-white">Each full move consists of three steps:</p>
-          <ol class="text-white list-decimal list-inside">
+          <ul class="text-white list-disc list-inside">
             <li>Select a column to drop your pawn into.</li>
             <li>Use "move" command.</li>
             <li>Use "confirm" command to finalize the move.</li>
-          </ol>
+          </ul>
           <p class="text-white mt-4">To reset game use "reset" and "confirm".</p>
           <p class="text-white mt-4">Possible modalities: mouse, gestures, voice.</p>
           <p class="text-white">Modalities can be mixed for different kinds of actions.</p>
